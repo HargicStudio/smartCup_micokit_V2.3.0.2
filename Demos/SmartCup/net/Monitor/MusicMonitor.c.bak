@@ -1,0 +1,106 @@
+
+
+
+/***
+
+History:
+2015-12-22: Ted: Create
+
+*/
+
+
+#include "MusicMonitor.h"
+#include "If_MO.h"
+#include "user_debug.h"
+
+#ifdef DEBUG
+  #define user_log(M, ...) custom_log("MusicMonitor", M, ##__VA_ARGS__)
+  #define user_log_trace() custom_log_trace("MusicMonitor")
+#else
+#ifdef USER_DEBUG
+  #define user_log(M, ...) user_debug("MusicMonitor", M, ##__VA_ARGS__)
+  #define user_log_trace() (void)0
+#endif
+#endif
+
+
+typedef struct SPlaylTrack_t {
+    u16 trackNum;
+} SPlayTrack;
+
+
+#define MAX_WAITING_TRACK_NUM   10
+
+#define STACK_SIZE_MUSIC_THREAD          0x400
+
+
+static mico_thread_t music_monitor_thread_handle = NULL;
+static mico_queue_t track_queue = NULL;
+
+
+static void music_thread(void* arg);
+
+
+OSStatus MusicInit()
+{
+    OSStatus err;
+    
+    err = mico_rtos_init_queue(&track_queue, "TrackQueue", sizeof(SPlayTrack), MAX_WAITING_TRACK_NUM);
+    require_noerr_action(err, exit, user_log("[ERR]MusicInit: track_queue initialize failed"));
+    require(track_queue, exit);
+    user_log("[DBG]MusicInit: track_queue initialize success");
+
+#if 1
+    // start the music monitor thread
+    err = mico_rtos_create_thread(&music_monitor_thread_handle, MICO_APPLICATION_PRIORITY, "music_monitor", 
+                                  music_thread, STACK_SIZE_MUSIC_THREAD, 
+                                  NULL );
+    require_noerr_action( err, exit, user_log("[ERR]MusicInit: create music thread failed") );
+    user_log("[DBG]MusicInit: create music thread success");
+#endif
+    
+exit:
+    return err;
+}
+
+static void music_thread(void* arg)
+{
+    // avoid compiling warning
+    arg = arg;
+    user_log_trace();
+
+    SPlayTrack* track = NULL;
+  
+    /* thread loop */
+    while(1) {
+        if(kNoErr == mico_rtos_pop_from_queue(&track_queue, &track, MICO_WAIT_FOREVER)) {
+            // TODO: playing the song in while, get the track number by " *track "
+
+            user_log("[DBG]music_thread: play song index(%d)", track->trackNum);
+
+            // free the track memery
+            if(track) free(track);
+        }
+    }
+
+//    mico_rtos_delete_thread(NULL);  // delete current thread
+}
+
+#if 0
+OSStatus PlayingSong(u16 tracknum)
+{
+    user_log("[DBG]PlayingSong: playing tracknum(%d)", tracknum);
+}
+#else
+OSStatus PlayingSong(u16 tracknum)
+{
+    SPlayTrack* track;
+    track = (SPlayTrack*)malloc(sizeof(SPlayTrack));
+    track->trackNum = tracknum;
+    return mico_rtos_push_to_queue(&track_queue, (void*)track, 0);
+}
+#endif
+
+// end of file
+
+
