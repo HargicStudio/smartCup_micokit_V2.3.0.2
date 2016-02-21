@@ -2,6 +2,8 @@
 =                      MiCOKit SDK Change Log                    =
 ==================================================================
 
+# modify in github
+
 ----------------------------------------------------------------
 [DATE   ] 2015.9.1
 
@@ -49,7 +51,7 @@
               Cloud_RGB_LED         <===>  Wecaht APP
               Cloud_Read_Humiture   <===>  Wecaht APP
               Cloud_RGB_Humiture    <===>  Wecaht APP
-              MiCOKit_Enjoy         <===>  MiCO总动员APP
+              MiCOKit_Enjoy         <===>  MiCO脳脺露炉脭卤APP
 
 ----------------------------------------------------------------
 [DATE   ] 2015.7.25
@@ -63,7 +65,7 @@
               Cloud_RGB_LED         <===>  Wecaht APP
               Cloud_Read_Humiture   <===>  Wecaht APP
               Cloud_RGB_Humiture    <===>  Wecaht APP
-              MiCOKit_Enjoy         <===>  MiCO总动员APP
+              MiCOKit_Enjoy         <===>  MiCO脳脺露炉脭卤APP
 
           3.All these projects can be built both with 
             IAR && MDK IDE;
