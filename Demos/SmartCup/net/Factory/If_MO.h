@@ -18,33 +18,39 @@ History:
 #include "Object_int.h"
 #include "stdbool.h"
    
-
+//
+// DEVICE-1
+//
 typedef struct SDevice_t {
     u8      power;
     i16     signalStrength;
-    float   temperature;
     float   tfCapacity;
     float   tfFree;
     bool    lowPowerAlarm;
     bool    powerOnDisplay;
     bool    tfStatus;
-    bool    tempSwitch;
 } SDevice;
 
-   
+//
+// LIGHTS-1
+//
 typedef struct SLedConf_t {
     u8      red;
     u8      green;
     u8      blue;
 } SLedConf;
 
+
 typedef struct SLight_t {
     SLedConf ledConf;
+    u8      brightness;
     bool    enableNotifyLight;
     bool    ledSwitch;
 } SLight;
 
-
+//
+// MUSIC-1
+//
 typedef struct SMusic_t {
     u8      volume;
     u8      downLoadRate;
@@ -59,7 +65,9 @@ typedef struct STrack_t {
     char*   trackName;
 } STrack;
 
-
+//
+// HEALTH-1
+//
 typedef struct SNoDisturbingTime_t {
     u8      startHour;
     u8      endHour;
@@ -110,9 +118,26 @@ typedef struct SSchedule_t {
     bool    enable;
 } SSchedule;
 
+//
+// HEATER-1
+//
+typedef struct SAppoint_t {
+    u8      Hour;
+    u8      Minute;
+} SAppoint;
+
+typedef struct SHeater_t {
+    SAppoint appoint;
+    i8      temperature;
+    i8      targetTemp;
+    bool    tempSwitch;
+    bool    ifHeaterWorking;
+} SHeater;
+
 
 void MOInit();
 
+//DEVICE-1
 void SetPower(u8 power);
 u8 GetPower();
 bool IsPowerChanged();
@@ -124,14 +149,6 @@ bool IsLowPowerAlarmChanged();
 void SetSignalStrengh(i16 value);
 i16 GetSignalStrengh();
 bool IsSignalStrenghChanged();
-
-void SetTemperature(float value);
-float GetTemperature();
-bool IsTemperatureChanged();
-
-void SetTempSwitch(bool flag);
-bool GetTempSwitch();
-bool IsTempSwitchChanged();
 
 void SetPowerOnDisplay(bool flag);
 bool GetPowerOnDisplay();
@@ -149,6 +166,7 @@ void SetTFFree(float value);
 float GetTFFree();
 bool IsTFFreeChanged();
 
+//LIGHTS-1
 void SetEnableNotifyLight(bool flag);
 bool GetEnableNotifyLight();
 bool IsEnableNotifyLightChanged();
@@ -156,6 +174,10 @@ bool IsEnableNotifyLightChanged();
 void SetLedSwitch(bool flag);
 bool GetLedSwitch();
 bool IsLedSwitchChanged();
+
+void SetBrightness(u8 brightness);
+u8 GetBrightness();
+bool IsBrightnessChanged();
 
 void SetRedConf(u8 value);
 u8 GetRedConf();
@@ -165,6 +187,7 @@ void SetBlueConf(u8 value);
 u8 GetBlueConf();
 bool IsLedConfChanged();
 
+//MUSIC-1
 void SetVolume(u8 value);
 u8 GetVolume();
 bool IsVolumeChanged();
@@ -173,6 +196,7 @@ void SetDownLoadRate(u8 value);
 u8 GetDownLoadRate();
 bool IsDownLoadRateChanged();
 
+//HEALTH-1
 void SetDrinkStamp(bool flag);
 bool GetDrinkStamp();
 bool IsDrinkStampChanged();
@@ -226,6 +250,29 @@ u8 GetScheduleRemindMinute(u8 index);
 void SetScheduleRemindTimes(u8 index, u8 value);
 u8 GetScheduleRemindTimes(u8 index);
 bool IsScheduleChanged(u8 index);
+
+//HEATER-1
+void SetTemperature(float value);
+float GetTemperature();
+bool IsTemperatureChanged();
+
+void SetTempSwitch(bool flag);
+bool GetTempSwitch();
+bool IsTempSwitchChanged();
+
+void SetTargetTemp(i8 value);
+i8 GetTargetTemp();
+bool IsTargetTempChanged();
+
+void SetAppointmentHour(u8 hour);
+u8 GetAppointmentHour();
+void SetAppointmentMinute(u8 minute);
+u8 GetAppointmentMinute();
+bool IsAppointmentChanged();
+
+void SetIfHeaterWorking(bool flag);
+bool GetIfHeaterWorking();
+bool IsIfHeaterWorkingChanged();
 
 
    

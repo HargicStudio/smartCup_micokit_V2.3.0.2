@@ -80,6 +80,10 @@ static void music_thread(void* arg)
     music_num = MP3_getMp3FileNum("0:/");
     user_log("[DBG]music_thread: path 0:/ have mp3 file number %d", music_num);
 
+    if(GetPowerOnDisplay() == true) {
+        PlayingSong(10);
+    }
+
     for(i=0; i<music_num; i++) {
         MP3_getMp3FileName("0:/", i, name);
         AddTrack(i, name);
@@ -105,16 +109,17 @@ static char* SongIndexMap(u16 trackindex)
 {
     char* str = NULL;
     switch(trackindex) {
-        case 1: str = "american_goldfinch.wav"; break;
-        case 2: str = "american_robin.wav"; break;
-        case 3: str = "baltimore_oriole.wav"; break;
-        case 4: str = "blue_jay.wav"; break;
-        case 5: str = "eastern_bluebird.wav"; break;
-        case 6: str = "northern_cardinal.wav"; break;
-        case 7: str = "red-winged blackbird.wav"; break;
-        case 8: str = "wood_thrush_mono.wav"; break;
+        case 1: str = "1.mp3"; break;
+        case 2: str = "2.mp3"; break;
+        case 3: str = "3.mp3"; break;
+        case 4: str = "4.mp3"; break;
+        case 5: str = "5.mp3"; break;
+        case 6: str = "6.mp3"; break;
+        case 7: str = "7.mp3"; break;
+        case 8: str = "8.mp3"; break;
         case 9: str = "电池没电了.mp3"; break;
         case 10: str = "提醒及时喝水.mp3"; break;
+        case 11: str = "喝水.mp3"; break;
         default: str = NULL; break;
     }
 

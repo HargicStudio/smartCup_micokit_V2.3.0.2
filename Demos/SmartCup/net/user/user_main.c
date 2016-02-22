@@ -77,8 +77,11 @@ OSStatus net_main( app_context_t * const app_context )
   MOInit();
  
   // start the downstream thread to handle user command
-  err = mico_rtos_create_thread(&user_downstrem_thread_handle, MICO_APPLICATION_PRIORITY, "user_downstream", 
-                                user_downstream_thread, STACK_SIZE_USER_DOWNSTREAM_THREAD, 
+  err = mico_rtos_create_thread(&user_downstrem_thread_handle, 
+                                MICO_APPLICATION_PRIORITY, 
+                                "user_downstream", 
+                                user_downstream_thread, 
+                                STACK_SIZE_USER_DOWNSTREAM_THREAD, 
                                 app_context );
   require_noerr_action( err, exit, user_log("ERROR: create user_downstream thread failed!") );
   

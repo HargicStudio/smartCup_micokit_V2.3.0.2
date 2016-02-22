@@ -100,10 +100,6 @@ static void MOChangedNotification(app_context_t *app_context)
             ret = SendJsonInt(app_context, "DEVICE-1/SignalStrength", GetSignalStrengh());
             user_log("[DBG]MOChangedNotification: SignalStrength change to %d", GetSignalStrengh());
         }
-        else if(IsTemperatureChanged()) {
-            ret = SendJsonDouble(app_context, "DEVICE-1/Temperature", GetTemperature());
-            user_log("[DBG]MOChangedNotification: Temperature change to %lf", GetTemperature());
-        }
         else if(IsTFStatusChanged()) {
             ret = SendJsonBool(app_context, "DEVICE-1/TFStatus", GetTFStatus());
             user_log("[DBG]MOChangedNotification: TFStatus change to %s", GetTFStatus() ? "true" : "false");
@@ -125,7 +121,7 @@ static void PowerNotification()
 }
 
 
-#define LOW_POWER_LIMIT     15
+#define LOW_POWER_LIMIT     15  // unit: percent
 
 static void LowPowerAlarmNotification()
 {
@@ -145,11 +141,6 @@ static void SignalStrengthNotification()
     if(GetSignalStrengh() != wifi_link_status.wifi_strength) {
         SetSignalStrengh(wifi_link_status.wifi_strength);
     }
-}
-
-static void TemperatureNotification()
-{
-    
 }
 
 static void TFCardNotification()
