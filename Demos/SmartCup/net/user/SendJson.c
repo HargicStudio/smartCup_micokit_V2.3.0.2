@@ -283,6 +283,28 @@ bool SendJsonSchedule(app_context_t *arg)
     return ret;
 }
 
+bool SendJsonAppointment(app_context_t *arg)
+{
+    bool ret;
+    json_object *send_json_object = NULL;
+  
+    send_json_object = json_object_new_object();
+    if(NULL == send_json_object){
+        user_log("[ERR]SendJsonAppointment: create json object error");
+    }
+    else {
+        json_object_object_add(send_json_object, "HEATER-1/AppointmentHour", json_object_new_int(GetAppointmentHour()));
+        json_object_object_add(send_json_object, "HEATER-1/AppointmentMinute", json_object_new_int(GetAppointmentMinute())); 
+        ret = SendJson(arg, send_json_object);
+    }
+
+    // free json object memory
+    json_object_put(send_json_object);
+    send_json_object = NULL;
+
+    return ret;
+}
+
 
 // end of file
 
