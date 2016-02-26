@@ -110,16 +110,8 @@ static bool ParseOMfromCloud(app_context_t *app_context, const char* string)
     get_json_object = json_tokener_parse(string);
     if (NULL != get_json_object){
         json_object_object_foreach(get_json_object, key, val) {
-            // parse
-            if(strcmp(key, "DEVICE-1/TempSwitch") == 0) {
-                SetTempSwitch(json_object_get_boolean(val));
-            }
-            else if(strcmp(key, "DEVICE-1/GetTempSwitch") == 0) {
-                if(json_object_get_boolean(val) == true) {
-                    SendJsonBool(app_context, "DEVICE-1/TempSwitch", GetTempSwitch());
-                }
-            }
-            else if(strcmp(key, "DEVICE-1/PowerOnDisplay") == 0) {
+            // parse DEVICE-1
+            if(strcmp(key, "DEVICE-1/PowerOnDisplay") == 0) {
                 SetPowerOnDisplay(json_object_get_boolean(val));
             }
             else if(strcmp(key, "DEVICE-1/GetPowerOnDisplay") == 0) {
@@ -127,6 +119,7 @@ static bool ParseOMfromCloud(app_context_t *app_context, const char* string)
                     SendJsonBool(app_context, "DEVICE-1/PowerOnDisplay", GetPowerOnDisplay());
                 }
             }
+            // parse LIGHTS-1
             else if(strcmp(key, "LIGHTS-1/EnableNotifyLight") == 0) {
                 SetEnableNotifyLight(json_object_get_boolean(val));
 
@@ -145,7 +138,15 @@ static bool ParseOMfromCloud(app_context_t *app_context, const char* string)
             }
             else if(strcmp(key, "LIGHTS-1/GetLedSwitch") == 0) {
                 if(json_object_get_boolean(val) == true) {
-                    SendJsonBool(app_context, "DEVICE-1/LedSwitch", GetLedSwitch());
+                    SendJsonBool(app_context, "LIGHTS-1/LedSwitch", GetLedSwitch());
+                }
+            }
+            else if(strcmp(key, "LIGHTS-1/Brightness") == 0) {
+                SetBrightness(json_object_get_int(val));
+            }
+            else if(strcmp(key, "LIGHTS-1/GetBrightness") == 0) {
+                if(json_object_get_boolean(val) == true) {
+                    SendJsonBool(app_context, "LIGHTS-1/Brightness", GetBrightness());
                 }
             }
             else if(strcmp(key, "LIGHTS-1/LedConfRed") == 0) {
@@ -162,6 +163,7 @@ static bool ParseOMfromCloud(app_context_t *app_context, const char* string)
                     SendJsonLedConf(app_context);
                 }
             }
+            // parse MUSIC-1
             else if(strcmp(key, "MUSIC-1/Volume") == 0) {
                 SetVolume(json_object_get_int(val));
                 user_log("[DBG]ParseOMfromCloud: get volume %d, playing song", GetVolume());
@@ -178,13 +180,14 @@ static bool ParseOMfromCloud(app_context_t *app_context, const char* string)
             else if(strcmp(key, "MUSIC-1/GetTrackList") == 0) {
                 if(json_object_get_boolean(val) == true) {
                     user_log("[DBG]ParseOMfromCloud: will upload all track information here");
-                    // TODO: will trigger upload all track info.
+                    SendJsonTrack(app_context);
                 }
             }
             else if(strcmp(key, "MUSIC-1/DelTrack") == 0) {
                 user_log("[DBG]ParseOMfromCloud: will delete track(%d) here", json_object_get_int(val));
                 // TODO: will delete the track
             }
+            // parse HEALTH-1
             else if(strcmp(key, "HEALTH-1/IfNoDisturbing") == 0) {
                 SetIfNoDisturbing(json_object_get_boolean(val));
             }
@@ -200,6 +203,11 @@ static bool ParseOMfromCloud(app_context_t *app_context, const char* string)
             else if(strcmp(key, "HEALTH-1/NoDisturbingEndMinute") == 0) {
                 SetNoDisturbingEndMinute(json_object_get_int(val));
             }
+            else if(strcmp(key, "HEALTH-1/GetNoDisturbingConf") == 0) {
+                if(json_object_get_boolean(val) == true) {
+                    SendJsonNoDisturbingConf(app_context);
+                }
+            }
             else if(strncmp(key, "HEALTH-1/PICKUP", strlen("HEALTH-1/PICKUP")) == 0) {
                 for(index = 0; index < MAX_DEPTH_PICKUP; index++) {
                     sprintf(om_string, "HEALTH-1/PICKUP-%d/Enable\0", index + 1);
@@ -213,6 +221,11 @@ static bool ParseOMfromCloud(app_context_t *app_context, const char* string)
                         SetPickUpSelTrack(index, json_object_get_int(val));
                         break;
                     }
+                }
+            }
+            else if(strcmp(key, "HEALTH-1/GetPickup") == 0) {
+                if(json_object_get_boolean(val) == true) {
+                    SendJsonPickup(app_context);
                 }
             }
             else if(strncmp(key, "HEALTH-1/PUTDOWN", strlen("HEALTH-1/PUTDOWN")) == 0) {
@@ -236,6 +249,11 @@ static bool ParseOMfromCloud(app_context_t *app_context, const char* string)
                     }
                 }
             }
+            else if(strcmp(key, "HEALTH-1/GetPutdown") == 0) {
+                if(json_object_get_boolean(val) == true) {
+                    SendJsonPutdown(app_context);
+                }
+            }
             else if(strncmp(key, "HEALTH-1/IMMEDIATE", strlen("HEALTH-1/IMMEDIATE")) == 0) {
                 for(index = 0; index < MAX_DEPTH_IMMEDIATE; index++) {
                     sprintf(om_string, "HEALTH-1/IMMEDIATE-%d/Enable\0", index + 1);
@@ -249,6 +267,11 @@ static bool ParseOMfromCloud(app_context_t *app_context, const char* string)
                         SetImmediateSelTrack(index, json_object_get_int(val));
                         break;
                     }
+                }
+            }
+            else if(strcmp(key, "HEALTH-1/GetImmediate") == 0) {
+                if(json_object_get_boolean(val) == true) {
+                    SendJsonImmediate(app_context);
                 }
             }
             else if(strncmp(key, "HEALTH-1/SCHEDULE", strlen("HEALTH-1/SCHEDULE")) == 0) {
@@ -284,7 +307,43 @@ static bool ParseOMfromCloud(app_context_t *app_context, const char* string)
                     }
                 }
             }
-            
+            else if(strcmp(key, "HEALTH-1/GetSchedule") == 0) {
+                if(json_object_get_boolean(val) == true) {
+                    SendJsonSchedule(app_context);
+                }
+            }
+            // parse HEATER-1
+            else if(strcmp(key, "HEATER-1/TempSwitch") == 0) {
+                SetTempSwitch(json_object_get_boolean(val));
+            }
+            else if(strcmp(key, "HEATER-1/GetTempSwitch") == 0) {
+                if(json_object_get_boolean(val) == true) {
+                    SendJsonBool(app_context, "HEATER-1/TempSwitch", GetTempSwitch());
+                }
+            }
+            else if(strcmp(key, "HEATER-1/TargetTemp") == 0) {
+                SetTargetTemp(json_object_get_int(val));
+            }
+            else if(strcmp(key, "HEATER-1/GetTargetTemp") == 0) {
+                if(json_object_get_boolean(val) == true) {
+                    SendJsonInt(app_context, "HEATER-1/TargetTemp", GetTargetTemp());
+                }
+            }
+            else if(strcmp(key, "HEATER-1/AppointmentHour") == 0) {
+                SetAppointmentHour(json_object_get_int(val));
+            }
+            else if(strcmp(key, "HEATER-1/AppointmentMinute") == 0) {
+                SetAppointmentMinute(json_object_get_int(val));
+            }
+            else if(strcmp(key, "HEATER-1/GetAppointment") == 0) {
+                if(json_object_get_boolean(val) == true) {
+                    SendJsonAppointment(app_context);
+                }
+            }
+            // parse DEBUG-1
+            else if(strcmp(key, "DEBUG-1/PlaySong") == 0) {
+                PlayingSong(json_object_get_int(val));
+            }
 #if 0
             // for echo debug
             else if(strcmp(key, "DEVICE-1/Power") == 0){
@@ -342,10 +401,6 @@ bool IsParameterChanged()
     bool set_action = false;
     u8 index;
 
-    if(IsTempSwitchChanged()) {
-        set_action = true;
-        user_log("[DBG]IsParameterChanged: TempSwitch change to %s", GetTempSwitch() ? "true" : "false");
-    }
     if(IsPowerOnDisplayChanged()) {
         set_action = true;
         user_log("[DBG]IsParameterChanged: PowerOnDisplay change to %s", GetPowerOnDisplay() ? "true" : "false");
@@ -356,11 +411,17 @@ bool IsParameterChanged()
     }
     if(IsLedSwitchChanged()) {
         set_action = true;
-        user_log("[DBG]IsParameterChanged: LedSwitch change %s", GetLedSwitch() ? "true" : "false");
+        user_log("[DBG]IsParameterChanged: LedSwitch change to %s", GetLedSwitch() ? "true" : "false");
+    }
+    if(IsBrightnessChanged()) {
+        set_action = true;
+        user_log("[DBG]IsParameterChanged: Brightness change to %d", GetBrightness());
     }
     if(IsLedConfChanged()) {
         set_action = true;
         user_log("[DBG]IsParameterChanged: LedConf change R:%d G:%d B:%d", GetRedConf(), GetGreenConf(), GetBlueConf());
+
+        // update current led conf
         if(GetLedSwitch()) {
             LED_openRGB(GetRedConf(), GetGreenConf(), GetBlueConf());
             user_log("[DBG]IsParameterChanged: set LedConf R:%d G:%d B:%d", GetRedConf(), GetGreenConf(), GetBlueConf());
@@ -369,11 +430,11 @@ bool IsParameterChanged()
     if(IsVolumeChanged()) {
         set_action = true;
         MP3_setVolume(GetVolume());
-        user_log("[DBG]IsParameterChanged: Volume change %d", GetVolume());
+        user_log("[DBG]IsParameterChanged: Volume change to %d", GetVolume());
     }
     if(IsIfNoDisturbingChanged()) {
         set_action = true;
-        user_log("[DBG]IsParameterChanged: IfNoDisturbing change %s", GetIfNoDisturbing() ? "true" : "false");
+        user_log("[DBG]IsParameterChanged: IfNoDisturbing change to %s", GetIfNoDisturbing() ? "true" : "false");
     }
     if(IsNoDisturbingTimeChanged()) {
         set_action = true;
@@ -422,6 +483,18 @@ bool IsParameterChanged()
                     GetScheduleRemindTimes(index),
                     GetScheduleSelTrack(index));
         }
+    }
+    if(IsTempSwitchChanged()) {
+        set_action = true;
+        user_log("[DBG]IsParameterChanged: TempSwitch change to %s", GetTempSwitch() ? "true" : "false");
+    }
+    if(IsTargetTempChanged()) {
+        set_action = true;
+        user_log("[DBG]IsParameterChanged: TargetTemp change to %d", GetTargetTemp());
+    }
+    if(IsAppointmentChanged()) {
+        set_action = true;
+        user_log("[DBG]IsParameterChanged: Appointment change %2d:%2d", GetAppointmentHour(), GetAppointmentMinute());
     }
 
     if(set_action) {

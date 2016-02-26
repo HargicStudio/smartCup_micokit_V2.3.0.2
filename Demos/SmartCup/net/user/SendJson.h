@@ -29,6 +29,8 @@ bool SendJsonPickup(app_context_t *arg);
 bool SendJsonPutdown(app_context_t *arg);
 bool SendJsonImmediate(app_context_t *arg);
 bool SendJsonSchedule(app_context_t *arg);
+bool SendJsonAppointment(app_context_t *arg);
+bool SendJsonTrack(app_context_t *arg);
 
    
 #ifdef __cplusplus

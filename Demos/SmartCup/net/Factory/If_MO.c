@@ -46,6 +46,10 @@ History:
 #define SCHEDULE_REMINDMINUTE_BIT       (1<<3)
 #define SCHEDULE_REMINDTIMES_BIT        (1<<4)
 
+#define APPOINTMENT_MASK                (0x03)
+#define APPOINTMENT_HOUR_BIT            (1<<0)
+#define APPOINTMENT_MINUTE_BIT          (1<<1)
+
 
 SDevice 	gDevice;
 SLight  	gLight;
@@ -56,6 +60,7 @@ SPickup 	gPickup[MAX_DEPTH_PICKUP];
 SPutdown	gPutdown[MAX_DEPTH_PUTDOWN];
 SImmediate	gImmediate[MAX_DEPTH_IMMEDIATE];
 SSchedule	gSchedule[MAX_DEPTH_SCHEDULE];
+SHeater     gHeater;
 
 // used for storage buffer
 static SLedConf sLedConf_temp;
@@ -64,21 +69,25 @@ static SPickup sPickup_temp[MAX_DEPTH_PICKUP];
 static SPutdown sPutdown_temp[MAX_DEPTH_PUTDOWN];
 static SImmediate sImmediate_temp[MAX_DEPTH_IMMEDIATE];
 static SSchedule sSchedule_temp[MAX_DEPTH_SCHEDULE];
+static SAppoint sAppoint_temp;
 
+//DEVICE-1
 static bool isPowerChanged = false;
 static bool isLowPowerAlarmChanged = false;
 static bool isSignalStrenghChanged = false;
-static bool isTemperatureChanged = false;
-static bool isTempSwitchChanged = false;
 static bool isPowerOnDisplayChanged = false;
 static bool isTFStatusChanged = false;
 static bool isTFCapacityChanged = false;
 static bool isTFFreeChanged = false;
+//LIGHTS-1
 static bool isEnableNotifyLightChanged = false;
 static bool isLedSwitchChanged = false;
+static bool isBrightnessChanged = false;
 static u8   isLedConfChanged = 0;
+//MUSIC-1
 static bool isVolumeChanged = false;
 static bool isDownLoadRateChanged = false;
+//HEALTH-1
 static bool isDrinkStampChanged = false;
 static bool isPutDownStampChanged = false;
 static bool isIfNoDisturbingChanged = false;
@@ -87,7 +96,12 @@ static u8   isPickupChanged[MAX_DEPTH_PICKUP] = {0};
 static u8   isPutdownChanged[MAX_DEPTH_PUTDOWN] = {0};
 static u8   isImmediateChanged[MAX_DEPTH_IMMEDIATE] = {0};
 static u8   isScheduleChanged[MAX_DEPTH_SCHEDULE] = {0};
-
+//HEATER-1
+static bool isTemperatureChanged = false;
+static bool isTempSwitchChanged = false;
+static bool isTargetTempChanged = false;
+static u8   isAppointmentChanged = 0;
+static bool isIfHeaterWorkingChanged = false;
 
 
 static mico_mutex_t omMutex = NULL;
@@ -119,6 +133,10 @@ void MOInit()
     // init OM, get value from flash
     OMFactoryInit();
 }
+
+//
+// DEVICE-1
+//
 
 void SetPower(u8 power)
 {
@@ -201,64 +219,6 @@ bool IsSignalStrenghChanged()
     
     bool flag = isSignalStrenghChanged;
     isSignalStrenghChanged = false;
-
-    mico_rtos_unlock_mutex(&omMutex);
-    
-    return flag;
-}
-
-void SetTemperature(float value)
-{
-    mico_rtos_lock_mutex(&omMutex);
-
-    if(value != gDevice.temperature) {
-        gDevice.temperature = value;
-        isTemperatureChanged = true;
-    }
-
-    mico_rtos_unlock_mutex(&omMutex);
-}
-
-float GetTemperature()
-{
-    return gDevice.temperature;
-}
-
-bool IsTemperatureChanged()
-{
-    mico_rtos_lock_mutex(&omMutex);
-    
-    bool flag = isTemperatureChanged;
-    isTemperatureChanged = false;
-
-    mico_rtos_unlock_mutex(&omMutex);
-    
-    return flag;
-}
-
-void SetTempSwitch(bool flag)
-{
-    mico_rtos_lock_mutex(&omMutex);
-
-    if(flag != gDevice.tempSwitch) {
-        gDevice.tempSwitch = flag;
-        isTempSwitchChanged = true;
-    }
-
-    mico_rtos_unlock_mutex(&omMutex);
-}
-
-bool GetTempSwitch()
-{
-    return gDevice.tempSwitch;
-}
-
-bool IsTempSwitchChanged()
-{
-    mico_rtos_lock_mutex(&omMutex);
-    
-    bool flag = isTempSwitchChanged;
-    isTempSwitchChanged = false;
 
     mico_rtos_unlock_mutex(&omMutex);
     
@@ -381,6 +341,10 @@ bool IsTFFreeChanged()
     return flag;
 }
 
+//
+// LIGHTS-1
+//
+
 void SetEnableNotifyLight(bool flag)
 {
     mico_rtos_lock_mutex(&omMutex);
@@ -436,6 +400,35 @@ bool IsLedSwitchChanged()
 
     mico_rtos_unlock_mutex(&omMutex);
     
+    return flag;
+}
+
+void SetBrightness(u8 brightness)
+{
+    mico_rtos_lock_mutex(&omMutex);
+
+    if(brightness != gLight.brightness) {
+        gLight.brightness = brightness;
+        isBrightnessChanged = true;
+    }
+
+    mico_rtos_unlock_mutex(&omMutex);
+}
+
+u8 GetBrightness()
+{
+    return gLight.brightness;
+}
+
+bool IsBrightnessChanged()
+{
+    mico_rtos_lock_mutex(&omMutex);
+
+    bool flag = isBrightnessChanged;
+    isBrightnessChanged = false;
+
+    mico_rtos_unlock_mutex(&omMutex);
+
     return flag;
 }
 
@@ -501,6 +494,10 @@ bool IsLedConfChanged()
     return ret;
 }
 
+//
+// MUSIC-1
+//
+
 void SetVolume(u8 value)
 {
     mico_rtos_lock_mutex(&omMutex);
@@ -558,6 +555,10 @@ bool IsDownLoadRateChanged()
     
     return flag;
 }
+
+//
+// HEALTH-1
+//
 
 void SetDrinkStamp(bool flag)
 {
@@ -1030,6 +1031,174 @@ bool IsScheduleChanged(u8 index)
 
     return ret;
 }
+
+//
+// HEATER-1
+//
+
+void SetTemperature(float value)
+{
+    mico_rtos_lock_mutex(&omMutex);
+
+    if(value != gHeater.temperature) {
+        gHeater.temperature = value;
+        isTemperatureChanged = true;
+    }
+
+    mico_rtos_unlock_mutex(&omMutex);
+}
+
+float GetTemperature()
+{
+    return gHeater.temperature;
+}
+
+bool IsTemperatureChanged()
+{
+    mico_rtos_lock_mutex(&omMutex);
+    
+    bool flag = isTemperatureChanged;
+    isTemperatureChanged = false;
+
+    mico_rtos_unlock_mutex(&omMutex);
+    
+    return flag;
+}
+
+void SetTempSwitch(bool flag)
+{
+    mico_rtos_lock_mutex(&omMutex);
+
+    if(flag != gHeater.tempSwitch) {
+        gHeater.tempSwitch = flag;
+        isTempSwitchChanged = true;
+    }
+
+    mico_rtos_unlock_mutex(&omMutex);
+}
+
+bool GetTempSwitch()
+{
+    return gHeater.tempSwitch;
+}
+
+bool IsTempSwitchChanged()
+{
+    mico_rtos_lock_mutex(&omMutex);
+    
+    bool flag = isTempSwitchChanged;
+    isTempSwitchChanged = false;
+
+    mico_rtos_unlock_mutex(&omMutex);
+    
+    return flag;
+}
+
+void SetTargetTemp(i8 value)
+{
+    mico_rtos_lock_mutex(&omMutex);
+
+    if(value != gHeater.targetTemp) {
+        gHeater.targetTemp = value;
+        isTargetTempChanged = true;
+    }
+
+    mico_rtos_unlock_mutex(&omMutex);
+}
+
+i8 GetTargetTemp()
+{
+    return gHeater.targetTemp;
+}
+
+bool IsTargetTempChanged()
+{
+    mico_rtos_lock_mutex(&omMutex);
+    
+    bool flag = isTargetTempChanged;
+    isTargetTempChanged = false;
+
+    mico_rtos_unlock_mutex(&omMutex);
+    
+    return flag;
+}
+
+void SetAppointmentHour(u8 hour)
+{
+    mico_rtos_lock_mutex(&omMutex);
+
+    sAppoint_temp.Hour = hour;
+    isAppointmentChanged |= APPOINTMENT_HOUR_BIT;
+
+    mico_rtos_unlock_mutex(&omMutex);
+}
+
+u8 GetAppointmentHour()
+{
+    return gHeater.appoint.Hour;
+}
+
+void SetAppointmentMinute(u8 minute)
+{
+    mico_rtos_lock_mutex(&omMutex);
+
+    sAppoint_temp.Minute= minute;
+    isAppointmentChanged |= APPOINTMENT_MINUTE_BIT;
+
+    mico_rtos_unlock_mutex(&omMutex);
+}
+
+u8 GetAppointmentMinute()
+{
+    return gHeater.appoint.Minute;
+}
+
+bool IsAppointmentChanged()
+{
+    mico_rtos_lock_mutex(&omMutex);
+
+    bool ret = false;
+    
+    if(APPOINTMENT_MASK== (isAppointmentChanged & APPOINTMENT_MASK)) {
+        isAppointmentChanged = 0;
+        gHeater.appoint= sAppoint_temp;
+        ret = true;
+    }
+    
+    mico_rtos_unlock_mutex(&omMutex);
+
+    return ret;
+}
+
+void SetIfHeaterWorking(bool flag)
+{
+    mico_rtos_lock_mutex(&omMutex);
+
+    if(flag != gHeater.ifHeaterWorking) {
+        gHeater.ifHeaterWorking = flag;
+        isIfHeaterWorkingChanged = true;
+    }
+
+    mico_rtos_unlock_mutex(&omMutex);
+}
+
+bool GetIfHeaterWorking()
+{
+    return gHeater.ifHeaterWorking;
+}
+
+bool IsIfHeaterWorkingChanged()
+{
+    mico_rtos_lock_mutex(&omMutex);
+
+    bool flag = isIfHeaterWorkingChanged;
+    isIfHeaterWorkingChanged = false;
+
+    mico_rtos_unlock_mutex(&omMutex);
+
+    return flag;
+}
+
 
 // end of file
 

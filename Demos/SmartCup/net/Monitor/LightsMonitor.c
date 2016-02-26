@@ -74,7 +74,7 @@ static void lights_thread(void* arg)
         if(GetEnableNotifyLight()) {
             // TODO: LED cycle breath
             LED_openRGB(led[0], led[1], led[2]);
-            user_log("[DBG]lights_thread: R(%d) G(%d) B(%d)", led[0], led[1], led[2]);
+//            user_log("[DBG]lights_thread: R(%d) G(%d) B(%d)", led[0], led[1], led[2]);
 
             // type2
             if(led[countdown_led] == 0 || led[countup_led] >= MAX_LIGHT) {

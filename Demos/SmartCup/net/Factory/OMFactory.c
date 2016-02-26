@@ -116,11 +116,8 @@ static bool ParseOM(const char* string)
     get_json_object = json_tokener_parse(string);
     if (NULL != get_json_object){
         json_object_object_foreach(get_json_object, key, val) {
-            // parse
-            if(strcmp(key, "DEVICE-1/TempSwitch") == 0) {
-                SetTempSwitch(json_object_get_boolean(val));
-            }
-            else if(strcmp(key, "DEVICE-1/PowerOnDisplay") == 0) {
+            // parse the parameter which need to be stored
+            if(strcmp(key, "DEVICE-1/PowerOnDisplay") == 0) {
                 SetPowerOnDisplay(json_object_get_boolean(val));
             }
             else if(strcmp(key, "LIGHTS-1/EnableNotifyLight") == 0) {
@@ -128,6 +125,9 @@ static bool ParseOM(const char* string)
             }
             else if(strcmp(key, "LIGHTS-1/LedSwitch") == 0) {
                 SetLedSwitch(json_object_get_boolean(val));
+            }
+            else if(strcmp(key, "LIGHTS-1/Brightness") == 0) {
+                SetBrightness(json_object_get_int(val));
             }
             else if(strcmp(key, "LIGHTS-1/LedConfRed") == 0) {
                 SetRedConf(json_object_get_int(val));
@@ -240,6 +240,18 @@ static bool ParseOM(const char* string)
                     }
                 }
             }
+            else if(strcmp(key, "HEATER-1/TempSwitch") == 0) {
+                SetTempSwitch(json_object_get_boolean(val));
+            }
+            else if(strcmp(key, "HEATER-1/TargetTemp") == 0) {
+                SetTargetTemp(json_object_get_int(val));
+            }
+            else if(strcmp(key, "HEATER-1/AppointmentHour") == 0) {
+                SetAppointmentHour(json_object_get_int(val));
+            }
+            else if(strcmp(key, "HEATER-1/AppointmentMinute") == 0) {
+                SetAppointmentMinute(json_object_get_int(val));
+            }
         }
 
         // free memory of json object
@@ -274,14 +286,18 @@ void OMFactorySave()
         user_log("[ERR]OMFactorySave: create json object error");
     }
     else {
-        json_object_object_add(save_json_object, "DEVICE-1/TempSwitch", json_object_new_boolean(GetTempSwitch()));
+        //DEVICE-1
         json_object_object_add(save_json_object, "DEVICE-1/PowerOnDisplay", json_object_new_boolean(GetPowerOnDisplay()));
+        //LIGHTS-1
         json_object_object_add(save_json_object, "LIGHTS-1/EnableNotifyLight", json_object_new_boolean(GetEnableNotifyLight()));
         json_object_object_add(save_json_object, "LIGHTS-1/LedSwitch", json_object_new_boolean(GetLedSwitch()));
+        json_object_object_add(save_json_object, "LIGHTS-1/Brightness", json_object_new_int(GetBrightness()));
         json_object_object_add(save_json_object, "LIGHTS-1/LedConfRed", json_object_new_int(GetRedConf()));
         json_object_object_add(save_json_object, "LIGHTS-1/LedConfGreen", json_object_new_int(GetGreenConf()));
         json_object_object_add(save_json_object, "LIGHTS-1/LedConfBlue", json_object_new_int(GetBlueConf()));
+        //MUSIC-1
         json_object_object_add(save_json_object, "MUSIC-1/Volume", json_object_new_int(GetVolume()));
+        //HEALTH-1
         json_object_object_add(save_json_object, "HEALTH-1/IfNoDisturbing", json_object_new_boolean(GetIfNoDisturbing()));
         json_object_object_add(save_json_object, "HEALTH-1/NoDisturbingStartHour", json_object_new_int(GetNoDisturbingStartHour()));
         json_object_object_add(save_json_object, "HEALTH-1/NoDisturbingStartMinute", json_object_new_int(GetNoDisturbingStartMinute()));
@@ -327,6 +343,11 @@ void OMFactorySave()
             sprintf(om_string, "HEALTH-1/SCHEDULE-%d/SelTrack\0", index + 1);
             json_object_object_add(save_json_object, om_string, json_object_new_int(GetScheduleSelTrack(index)));
         }
+        //HEATER-1
+        json_object_object_add(save_json_object, "HEATER-1/TempSwitch", json_object_new_boolean(GetTempSwitch()));
+        json_object_object_add(save_json_object, "HEATER-1/TargetTemp", json_object_new_int(GetTargetTemp()));
+        json_object_object_add(save_json_object, "HEATER-1/AppointmentHour", json_object_new_int(GetAppointmentHour()));
+        json_object_object_add(save_json_object, "HEATER-1/AppointmentMinute", json_object_new_int(GetAppointmentMinute()));
 
         save_data = json_object_to_json_string(save_json_object);
         if(NULL == save_data) {
@@ -338,6 +359,7 @@ void OMFactorySave()
             require_noerr(err, exit);
 
             objectmodel_length = strlen(save_data);
+            user_log("[DBG]OMFactorySave: objectmodel_length %04x", objectmodel_length);
             para_offset = OBJECTMODEL_LENGTH_OFFSET;
             err = MicoFlashWrite(MICO_PARTITION_OBJECTMODEL, &para_offset, (uint8_t *)&objectmodel_length, OBJECTMODEL_LENGTH_SIZE);
             require_noerr(err, exit);
@@ -345,6 +367,7 @@ void OMFactorySave()
             CRC16_Init( &contex );
             CRC16_Update( &contex, save_data, objectmodel_length);
             CRC16_Final( &contex, &objectmodel_crc );
+            user_log("[DBG]OMFactorySave: objectmodel_crc %04x", objectmodel_crc);
             para_offset = OBJECTMODEL_CRC_OFFSET;
             err = MicoFlashWrite(MICO_PARTITION_OBJECTMODEL, &para_offset, (uint8_t *)&objectmodel_crc, OBJECTMODEL_CRC_SIZE);
             require_noerr(err, exit);
@@ -369,14 +392,18 @@ static void SaveObjectModelDefaultParameter()
 
     user_log("[DBG]SaveObjectModelDefaultParameter: will save default parameter");
     
-    SetTempSwitch(false);
+    //DEVICE-1
     SetPowerOnDisplay(false);
+    //LIGHTS-1
     SetEnableNotifyLight(false);
     SetLedSwitch(false);
-    SetRedConf(50);
-    SetGreenConf(50);
-    SetBlueConf(50);
+    SetBrightness(50);
+    SetRedConf(20);
+    SetGreenConf(0);
+    SetBlueConf(0);
+    //MUSIC-1
     SetVolume(20);
+    //HEALTH-1
     SetIfNoDisturbing(false);
     SetNoDisturbingStartHour(0);
     SetNoDisturbingStartMinute(0);
@@ -403,6 +430,11 @@ static void SaveObjectModelDefaultParameter()
         SetScheduleRemindTimes(index, 0);
         SetScheduleSelTrack(index, 0);
     }
+    //HEATER-1
+    SetTempSwitch(true);
+    SetTargetTemp(26);
+    SetAppointmentHour(0);
+    SetAppointmentMinute(0);
 
     OMFactorySave();
 }
@@ -410,15 +442,44 @@ static void SaveObjectModelDefaultParameter()
 static void PrintInitParameter()
 {
     u8 index;
-    
-    user_log("[DBG]PrintInitParameter: DEVICE-1/TempSwitch: %s", GetTempSwitch() ? "true" : "false");
+
+    // clear changed flag
+    IsPowerChanged();
+    IsEnableNotifyLightChanged();
+    IsLedSwitchChanged();
+    IsBrightnessChanged();
+    IsLedConfChanged();
+    IsVolumeChanged();
+    IsIfNoDisturbingChanged();
+    IsNoDisturbingTimeChanged();
+    for(index = 0; index < MAX_DEPTH_PICKUP; index++) {
+        IsPickupChanged(index);
+    }
+    for(index = 0; index < MAX_DEPTH_PUTDOWN; index++) {
+        IsPutdownChanged(index);
+    }
+    for(index = 0; index < MAX_DEPTH_IMMEDIATE; index++) {
+        IsImmediateChanged(index);
+    }
+    for(index = 0; index < MAX_DEPTH_SCHEDULE; index++) {
+        IsScheduleChanged(index);
+    }
+    IsTempSwitchChanged();
+    IsTargetTempChanged();
+    IsAppointmentChanged();
+
+    //DEVICE-1
     user_log("[DBG]PrintInitParameter: DEVICE-1/PowerOnDisplay: %s", GetPowerOnDisplay() ? "true" : "false");
+    //LIGHTS-1
     user_log("[DBG]PrintInitParameter: LIGHTS-1/EnableNotifyLight: %s", GetEnableNotifyLight() ? "true" : "false");
     user_log("[DBG]PrintInitParameter: LIGHTS-1/LedSwitch: %s", GetLedSwitch() ? "true" : "false");
+    user_log("[DBG]PrintInitParameter: LIGHTS-1/Brightness: %d", GetBrightness());
     user_log("[DBG]PrintInitParameter: LIGHTS-1/LedConfRed: %d", GetRedConf());
     user_log("[DBG]PrintInitParameter: LIGHTS-1/LedConfGreen: %d", GetGreenConf());
     user_log("[DBG]PrintInitParameter: LIGHTS-1/LedConfBlue: %d", GetBlueConf());
+    //MUSIC-1
     user_log("[DBG]PrintInitParameter: MUSIC-1/Volume: %d", GetVolume());
+    //HEALTH-1
     user_log("[DBG]PrintInitParameter: HEALTH-1/IfNoDisturbing: %s", GetIfNoDisturbing() ? "true" : "false");
     user_log("[DBG]PrintInitParameter: HEALTH-1/NoDisturbingStartHour: %d", GetNoDisturbingStartHour());
     user_log("[DBG]PrintInitParameter: HEALTH-1/NoDisturbingStartMinute: %d", GetNoDisturbingStartMinute());
@@ -445,6 +506,11 @@ static void PrintInitParameter()
         user_log("[DBG]PrintInitParameter: HEALTH-1/SCHEDULE-%d/RemindDelay: %d", index, GetScheduleRemindTimes(index));
         user_log("[DBG]PrintInitParameter: HEALTH-1/SCHEDULE-%d/SelTrack: %d", index, GetScheduleSelTrack(index));
     }
+    //HEATER-1
+    user_log("[DBG]PrintInitParameter: HEATER-1/TempSwitch: %s", GetTempSwitch() ? "true" : "false");
+    user_log("[DBG]PrintInitParameter: HEATER-1/TargetTemp: %d", GetTargetTemp());
+    user_log("[DBG]PrintInitParameter: HEATER-1/AppointmentHour: %d", GetAppointmentHour());
+    user_log("[DBG]PrintInitParameter: HEATER-1/AppointmentMinute: %d", GetAppointmentMinute());
 }
 
 // end of file
