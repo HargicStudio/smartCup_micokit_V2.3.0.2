@@ -359,6 +359,7 @@ void OMFactorySave()
             require_noerr(err, exit);
 
             objectmodel_length = strlen(save_data);
+            user_log("[DBG]OMFactorySave: objectmodel_length %04x", objectmodel_length);
             para_offset = OBJECTMODEL_LENGTH_OFFSET;
             err = MicoFlashWrite(MICO_PARTITION_OBJECTMODEL, &para_offset, (uint8_t *)&objectmodel_length, OBJECTMODEL_LENGTH_SIZE);
             require_noerr(err, exit);
@@ -366,6 +367,7 @@ void OMFactorySave()
             CRC16_Init( &contex );
             CRC16_Update( &contex, save_data, objectmodel_length);
             CRC16_Final( &contex, &objectmodel_crc );
+            user_log("[DBG]OMFactorySave: objectmodel_crc %04x", objectmodel_crc);
             para_offset = OBJECTMODEL_CRC_OFFSET;
             err = MicoFlashWrite(MICO_PARTITION_OBJECTMODEL, &para_offset, (uint8_t *)&objectmodel_crc, OBJECTMODEL_CRC_SIZE);
             require_noerr(err, exit);
@@ -440,6 +442,31 @@ static void SaveObjectModelDefaultParameter()
 static void PrintInitParameter()
 {
     u8 index;
+
+    // clear changed flag
+    IsPowerChanged();
+    IsEnableNotifyLightChanged();
+    IsLedSwitchChanged();
+    IsBrightnessChanged();
+    IsLedConfChanged();
+    IsVolumeChanged();
+    IsIfNoDisturbingChanged();
+    IsNoDisturbingTimeChanged();
+    for(index = 0; index < MAX_DEPTH_PICKUP; index++) {
+        IsPickupChanged(index);
+    }
+    for(index = 0; index < MAX_DEPTH_PUTDOWN; index++) {
+        IsPutdownChanged(index);
+    }
+    for(index = 0; index < MAX_DEPTH_IMMEDIATE; index++) {
+        IsImmediateChanged(index);
+    }
+    for(index = 0; index < MAX_DEPTH_SCHEDULE; index++) {
+        IsScheduleChanged(index);
+    }
+    IsTempSwitchChanged();
+    IsTargetTempChanged();
+    IsAppointmentChanged();
 
     //DEVICE-1
     user_log("[DBG]PrintInitParameter: DEVICE-1/PowerOnDisplay: %s", GetPowerOnDisplay() ? "true" : "false");
