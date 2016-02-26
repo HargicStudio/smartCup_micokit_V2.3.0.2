@@ -180,7 +180,7 @@ static bool ParseOMfromCloud(app_context_t *app_context, const char* string)
             else if(strcmp(key, "MUSIC-1/GetTrackList") == 0) {
                 if(json_object_get_boolean(val) == true) {
                     user_log("[DBG]ParseOMfromCloud: will upload all track information here");
-                    // TODO: will trigger upload all track info.
+                    SendJsonTrack(app_context);
                 }
             }
             else if(strcmp(key, "MUSIC-1/DelTrack") == 0) {
@@ -339,6 +339,10 @@ static bool ParseOMfromCloud(app_context_t *app_context, const char* string)
                 if(json_object_get_boolean(val) == true) {
                     SendJsonAppointment(app_context);
                 }
+            }
+            // parse DEBUG-1
+            else if(strcmp(key, "DEBUG-1/PlaySong") == 0) {
+                PlayingSong(json_object_get_int(val));
             }
 #if 0
             // for echo debug

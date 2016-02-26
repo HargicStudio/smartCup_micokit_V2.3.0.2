@@ -277,7 +277,8 @@ u8 MP3_getMp3FileName(u8 *path, u8 index, u8 *pMp3FileName)
 
                     if (strlen(fn) < _MAX_LFN)
                     {
-                      memcpy(pMp3FileName, fn, strlen(fn));
+                      sprintf(pMp3FileName, "%s\0", fn);
+//                      memcpy(pMp3FileName, fn, strlen(fn));
                       res = 1;
                      //printf("目录%s下第%d歌曲名为: %s\r\n",path,index, fn); //显示歌曲名字    
                     }

@@ -12,6 +12,7 @@ History:
 #include "MusicMonitor.h"
 #include "If_MO.h"
 #include "user_debug.h"
+#include "ffconf.h"
 
 
 #ifdef DEBUG
@@ -70,23 +71,12 @@ static void music_thread(void* arg)
     arg = arg;
     user_log_trace();
 
-    u8 i;
     SPlayTrack track = {0};
-    char name[64];
-    u8 music_num;
-
-    music_num = MP3_getMp3FileNum("0:/default/");
-    user_log("[DBG]music_thread: path 0:/default/ have mp3 file number %d", music_num);
-    music_num = MP3_getMp3FileNum("0:/");
-    user_log("[DBG]music_thread: path 0:/ have mp3 file number %d", music_num);
+    char name[_MAX_LFN];
+    char pathname[_MAX_LFN];
 
     if(GetPowerOnDisplay() == true) {
-        PlayingSong(10);
-    }
-
-    for(i=0; i<music_num; i++) {
-        MP3_getMp3FileName("0:/", i, name);
-        AddTrack(i, name);
+        MP3_playSong("提醒及时喝水.mp3");
     }
   
     /* thread loop */
@@ -96,8 +86,13 @@ static void music_thread(void* arg)
 
             user_log("[DBG]music_thread: play song index(%d)", track.trackNum);
 
-            sprintf(name, "0:/%s\0", SongIndexMap(track.trackNum));
-            MP3_playSong(name);  //播放指定歌曲
+            MP3_getMp3FileName("0:/", (u8)track.trackNum, (u8*)name);
+            sprintf(pathname, "0:/%s\0", name);
+            user_log("[DBG]music_thread: start play song %s", pathname);
+            MP3_playSong(pathname);  //播放指定歌曲
+            
+//            sprintf(name, "0:/%s\0", SongIndexMap(track.trackNum));
+//            MP3_playSong(name);  //播放指定歌曲
             user_log("[DBG]music_thread: play song finished");
         }
     }
@@ -131,15 +126,11 @@ OSStatus PlayingSong(u16 tracknum)
     OSStatus err;
     SPlayTrack track = {0};
 
+    user_log("[DBG]PlayingSong: get song index %d", tracknum);
     track.trackNum = tracknum;
     err = mico_rtos_push_to_queue(&track_queue, &track, MICO_WAIT_FOREVER);
 
     return err;
-}
-
-void AddTrack(u16 idx, char *pMp3FileName)
-{
-    
 }
 
 // end of file

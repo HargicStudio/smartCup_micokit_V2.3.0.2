@@ -13,6 +13,9 @@ History:
 #include "SendJson.h"
 #include "If_MO.h"
 #include "user_debug.h"
+#include "ffconf.h"
+#include "mp3.h"
+
 
 #ifdef DEBUG
   #define user_log(M, ...) custom_log("SendJson", M, ##__VA_ARGS__)
@@ -295,6 +298,46 @@ bool SendJsonAppointment(app_context_t *arg)
     else {
         json_object_object_add(send_json_object, "HEATER-1/AppointmentHour", json_object_new_int(GetAppointmentHour()));
         json_object_object_add(send_json_object, "HEATER-1/AppointmentMinute", json_object_new_int(GetAppointmentMinute())); 
+        ret = SendJson(arg, send_json_object);
+    }
+
+    // free json object memory
+    json_object_put(send_json_object);
+    send_json_object = NULL;
+
+    return ret;
+}
+
+bool SendJsonTrack(app_context_t *arg)
+{
+    bool ret;
+    json_object *send_json_object = NULL;
+    u8 idx;
+    u8 music_num;
+    char name[_MAX_LFN];
+    char om_name[_MAX_LFN];
+    char om_string[64];
+
+    send_json_object = json_object_new_object();
+    if(NULL == send_json_object){
+        user_log("[ERR]SendJsonTrack: create json object error");
+    }
+    else {
+        music_num = MP3_getMp3FileNum("0:/default/");
+        user_log("[DBG]SendJsonTrack: path 0:/default/ have mp3 file number %d", music_num);
+        music_num = MP3_getMp3FileNum("0:/");
+        user_log("[DBG]SendJsonTrack: path 0:/ have mp3 file number %d", music_num);
+        
+        for(idx=0; idx<music_num; idx++) {
+            MP3_getMp3FileName("0:/", idx, (u8*)name);
+            
+            sprintf(om_string, "TRACK-%d/Index\0", idx + 1);
+            json_object_object_add(send_json_object, om_string, json_object_new_int(idx + 1));
+            sprintf(om_string, "TRACK-%d/TrackName\0", idx + 1);
+            sprintf(om_name, "%s\0", name);
+            json_object_object_add(send_json_object, om_string, json_object_new_string(om_name));
+        }
+
         ret = SendJson(arg, send_json_object);
     }
 
