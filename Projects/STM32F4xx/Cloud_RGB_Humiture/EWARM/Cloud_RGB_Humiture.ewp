@@ -17,15 +17,15 @@
         <debug>0</debug>
         <option>
           <name>ExePath</name>
-          <state>..\..\..\..\..\Build\Cloud_RGB_Humiture\Output\MiCOKit-3165\Exe</state>
+          <state>..\..\..\..\Build\SmartCup\Output\MiCOKit-3165\Exe</state>
         </option>
         <option>
           <name>ObjPath</name>
-          <state>..\..\..\..\..\Build\Cloud_RGB_Humiture\MiCOKit-3165\Obj</state>
+          <state>..\..\..\..\Build\SmartCup\MiCOKit-3165\Obj</state>
         </option>
         <option>
           <name>ListPath</name>
-          <state>..\..\..\..\..\Build\Cloud_RGB_Humiture\MiCOKit-3165\List</state>
+          <state>..\..\..\..\Build\SmartCup\MiCOKit-3165\List</state>
         </option>
         <option>
           <name>Variant</name>
